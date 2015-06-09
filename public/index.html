@@ -52,6 +52,7 @@
 
         var idjugador = 0;
         var aux = 0;
+
         socket.on("requestid",function(){
           if(idjugador!=0){
             socket.emit("setid",idjugador);
@@ -111,6 +112,7 @@
         $("#colores").on("click", ".color",function() {
           var jugada = $(this).attr("data-n");
           socket.emit("jugada",[jugada,idjugador]);
+
           $("#colores").hide();
           $("#wait").show();
           $("#wait div").css("font-size",30);

@@ -3,9 +3,6 @@ var app = express();
 var http = require('http').Server(app);
 var io = require('socket.io')(http);
 
-/*app.get('/', function(req, res){
-  res.sendFile(__dirname + '/public/index.html');
-});*/
 
 /*	Variables globales del juego */
 var gm = 0;
@@ -13,12 +10,14 @@ var sockets = {0:new function(){this.emit=function(){console.log("socket fantasm
 
 /*	---------------------------- */
 
+//File handler//
 app.use('/', express.static('public'));
 
-http.listen(3000, function(){
-  console.log('listening on *:3000');
+//server//
+var port = 80;
+http.listen(port, function(){
+  console.log('listening on *:'+port);
 });
-
 
 var Jugadores = function() {
 	
@@ -65,26 +64,14 @@ var Jugadores = function() {
 		}
 	}
 
-
-
 }
-
-var j = new Jugadores;
 
 var Juego = function() {
 	
-	this.colores = {	0:["Rojo"    ,"danger"],
-						1:["Verde"   ,"success"],
-						2:["Amarillo","warning"],
-						3:["Celeste" ,"info"], 
-						4:["Blanco"  ,"default"]
-					};
-
 	this.escenario = {	1:0,
 						2:0,
 						3:0,
-						4:0
-					}
+						4:0}
 	this.target = 0;
 	this.winner = [];
 
@@ -128,32 +115,36 @@ var Juego = function() {
 		}
 	}
 
-
 }
 
+var j = new Jugadores;
 var game = new Juego;
 
 io.on('connection', function(socket){
-  console.log('a user connected');
+  console.log('->socket open');
 
   sockets[socket.id] = socket;
-
 
   //GM//
 
   socket.on("setgm",function() {
 
   	gm = socket.id
-
+  	console.log('->new GM');
   	for(jugador in j.jugadores){
   		if(j.jugadores[jugador]['active']==1){
-  			socket.emit("newplayer", jugador);	
+  			if(j.jugadores[jugador]['socket'].connected==true){
+  				socket.emit("newplayer", jugador);	
+  			}else{
+  				j.jugadores[jugador]['active']=0;
+  			}
   		}
   	}
   })
 
   socket.on("startgame",function() {
 
+  	console.log('->START GAME');
   	var secs = 5;
 
   	var I = function() { 
@@ -176,36 +167,45 @@ io.on('connection', function(socket){
 
   })
 
-
-
   //jugadores///
 
   //por si se desconecta a mitad de juego
   socket.emit("requestid");
   socket.on('setid', function(jugador){
-    j.reconnect(jugador, socket); 		
+    j.reconnect(jugador, socket);
+    console.log('->player reconnect');		
   });
 
   socket.on('disconnect', function(){
-    console.log("bye");
+    console.log('->socket closed');
     console.log(socket.id);
     j.disconnect(socket);
   });
 
   socket.on("ingresar", function(nombre) {
   	if(nombre in j.jugadores){
-  		if(j.jugadores['active']==0){
+  		if(j.jugadores[nombre]['active']==0){
   			j.reconnect(nombre,socket);
+  			console.log('->player reconnect');
   		}else{
-  			socket.emit("jugador-error","Jugador ya existe");
+  			if(j.jugadores[nombre]['socket'].connected==true){
+  				socket.emit("jugador-error","Jugador ya existe");
+  				console.log('->player no login');
+  			}else{
+  				j.jugadores[nombre]['active']=0;
+  				j.reconnect(nombre,socket);
+  				console.log('->player reconnect');
+  			}
   		}
   	}else{
   		//registrar
+  		console.log('->player connect');
   		j.add(nombre,socket);
   	}
   })
 
   socket.on("jugada",function(data) {
+  	console.log('->player JUGADA');
   	var jugador = data[1];
   	var jugada = data[0];
   	game.play(jugador,jugada,socket);

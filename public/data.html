@@ -69,17 +69,24 @@
         })
 
         socket.on("time",function(sec) {
+          //mostrar reloj
           $("#start").hide();
           $("#colores").hide();
           $("#winer").hide();
           $("#tiempo").show();
+          //poner tiempo
           $("#tiempo span").html(sec);
         })
         
         socket.on("start",function(data) {
-          $("#colores div").removeClass("btn-success btn-warning btn-danger btn-info btn-default").addClass(colores[data][1]);
-            $("#colores").show();
+            //poner color
+            $("#colores div").removeClass("btn-success btn-warning btn-danger btn-info btn-default").addClass(colores[data][1]);
+            
+            //reiniciar ganadores
             $("#listawinner").html("");
+            
+            //mostrar color
+            $("#colores").show();
             $("#winer").hide();
             $("#tiempo").hide();
         })
