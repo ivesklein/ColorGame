@@ -1,0 +1,101 @@
+<!doctype html>
+<html>
+  <head>
+    <title>ColorGame</title>
+
+      <meta content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0' name='viewport' />
+      <link rel="stylesheet" href="css/bootstrap.min.css" />
+      
+      <link rel="stylesheet" href="style.css" />
+      
+      
+  </head>
+  <body>
+    <nav class="navbar navbar-inverse ">
+      <div class="container inverse">
+        <a class="navbar-brand rainbowize" href="#">ColorGame</a>
+        <div class="btn btn-success pull-right navbar-btn" id="startall">Jugar</div>
+      </div>
+    </nav>
+    <div class="container">
+      <div class="col-sm-12" style="height:30px"></div>
+      <div class="col-sm-9">
+        <div id="start" class="text-center"><span style="font-size:100px;" class="rainbowize" href="#">ColorGame</span></div>
+        <div id="tiempo" class="text-center" style="display: none;"><span style="font-size: 300px !important;"></span></div>
+        <div id="colores" class="col-sm-12" style="display: none;"><div class="btn col-sm-12" style="height:300px"></div></div>
+        <div id="winer" class="col-sm-12" style="display: none;"><h1></h1></div>
+      </div>
+      <div class="col-sm-3">
+        <label for="">Jugadores</label>
+        <ul id="lista" class="list-group"></ul>
+        <label for="" class="list-group">Ganadores</label>
+        <ul id="listawinner"></ul>
+      </div>
+        
+
+
+      </div>
+
+    </div><!-- /page -->
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      var socket = io();
+
+        socket.emit("setgm");
+
+          var colores = {  0:["Rojo"    ,"btn-danger"],
+              1:["Verde"   ,"btn-success"],
+              2:["Amarillo","btn-warning"],
+              3:["Celeste" ,"btn-info"], 
+              4:["Blanco"  ,"btn-default"]
+            };
+
+        socket.on("newplayer",function(data) {
+          var nombre = data;
+          var id = nombre.replace(/ /g,"_");
+          $("#lista").append("<li class='list-group-item' id='"+id+"'>"+nombre+"</li>")
+        })
+        socket.on("delplayer",function(data) {
+          var nombre = data;
+          var id = nombre.replace(/ /g,"_");
+          $("#lista #"+id).remove();
+        })
+
+        $("#start div, #startall").click(function () {
+          socket.emit("startgame")
+        })
+
+        socket.on("time",function(sec) {
+          $("#start").hide();
+          $("#colores").hide();
+          $("#winer").hide();
+          $("#tiempo").show();
+          $("#tiempo span").html(sec);
+        })
+        
+        socket.on("start",function(data) {
+          $("#colores div").removeClass("btn-success btn-warning btn-danger btn-info btn-default").addClass(colores[data][1]);
+            $("#colores").show();
+            $("#listawinner").html("");
+            $("#winer").hide();
+            $("#tiempo").hide();
+        })
+
+        socket.on("winner",function(player) {
+          $("#listawinner").html("");
+          $("#listawinner").append("<li 'list-group-item'><h1>1) "+player+"!!</h1></li>");
+        })
+
+        socket.on("winner2",function(data) {
+          var player=data[0];
+          var place=data[1];
+          $("#listawinner").html();
+          $("#listawinner").append("<li>"+place+") "+player+"</li>");
+        })
+
+    </script>
+  </body>
+</html>
